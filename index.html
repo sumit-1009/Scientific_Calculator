@@ -1,0 +1,164 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Scientific Calculator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        text-align: center;
+      }
+      #result {
+        font-size: 24px;
+        margin-top: 10px;
+        color: green;
+      }
+      .form-group {
+        margin: 10px 0;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input,
+      select,
+      button {
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Advanced Scientific Calculator</h1>
+    <div id="calculator">
+      <div class="form-group">
+        <label for="operation">Operation</label>
+        <select id="operation">
+          <option value="sin">Sin</option>
+          <option value="cos">Cos</option>
+          <option value="tan">Tan</option>
+          <option value="log">Log</option>
+          <option value="ln">Ln</option>
+          <option value="exp">Exp</option>
+          <option value="power">Power</option>
+          <option value="mean">Mean</option>
+          <option value="median">Median</option>
+          <option value="standardDeviation">Standard Deviation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="value1">Value 1 (or list for mean/median/std)</label>
+        <input type="text" id="value1" placeholder="Enter the value(s)" />
+      </div>
+      <div class="form-group" id="value2-group" style="display: none">
+        <label for="value2">Value 2 (for power function)</label>
+        <input type="text" id="value2" placeholder="Enter the value" />
+      </div>
+      <button onclick="calculate()">Calculate</button>
+      <div id="result"></div>
+    </div>
+
+    <h2>Calculation History</h2>
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th>Expression</th>
+          <th>Result</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+
+    <script>
+      document
+        .getElementById("operation")
+        .addEventListener("change", function () {
+          if (this.value === "power") {
+            document.getElementById("value2-group").style.display = "block";
+          } else {
+            document.getElementById("value2-group").style.display = "none";
+          }
+        });
+
+      async function calculate() {
+        const operation = document.getElementById("operation").value;
+        const value1 = document.getElementById("value1").value;
+        const value2 = document.getElementById("value2").value || null;
+
+        const requestBody = {
+          operation: operation,
+          value1:
+            operation === "mean" ||
+            operation === "median" ||
+            operation === "standardDeviation"
+              ? value1.split(",").map(Number)
+              : Number(value1),
+          value2: value2 ? Number(value2) : null,
+        };
+
+        try {
+          const response = await fetch("http://localhost:5000/calculate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
+
+          const data = await response.json();
+          document.getElementById(
+            "result"
+          ).textContent = `Result: ${data.result}`;
+          loadHistory(); // Refresh the history after calculation
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
+      async function loadHistory() {
+        try {
+          const response = await fetch("http://localhost:5000/history");
+          const history = await response.json();
+
+          const historyBody = document.getElementById("history-body");
+          historyBody.innerHTML = ""; // Clear previous history
+
+          history.forEach((entry) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td>${entry.expression}</td>
+            <td>${entry.result}</td>
+            <td>${new Date(entry.timestamp).toLocaleString()}</td>
+          `;
+            historyBody.appendChild(row);
+          });
+        } catch (error) {
+          console.error("Error loading history:", error);
+        }
+      }
+
+      // Load history when the page loads
+      window.onload = loadHistory;  
+    </script>
+  </body>
+</html>

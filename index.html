@@ -66,8 +66,14 @@
         </select>
       </div>
       <div class="form-group">
-        <label for="value1">Value 1 (or list for mean/median/std)</label>
-        <input type="text" id="value1" placeholder="Enter the value(s)" />
+        <label for="value1"
+          >Value(s) (comma-separated for mean/median/std)</label
+        >
+        <input
+          type="text"
+          id="value1"
+          placeholder="Enter the value(s), e.g., 1,2,3,4,5"
+        />
       </div>
       <div class="form-group" id="value2-group" style="display: none">
         <label for="value2">Value 2 (for power function)</label>
@@ -105,14 +111,12 @@
         const value1 = document.getElementById("value1").value;
         const value2 = document.getElementById("value2").value || null;
 
+        // Parse value1 for operations that expect an array
         const requestBody = {
           operation: operation,
-          value1:
-            operation === "mean" ||
-            operation === "median" ||
-            operation === "standardDeviation"
-              ? value1.split(",").map(Number)
-              : Number(value1),
+          value1: ["mean", "median", "standardDeviation"].includes(operation)
+            ? value1.split(",").map(Number)
+            : Number(value1),
           value2: value2 ? Number(value2) : null,
         };
 
@@ -158,7 +162,7 @@
       }
 
       // Load history when the page loads
-      window.onload = loadHistory;  
+      window.onload = loadHistory;
     </script>
   </body>
 </html>
